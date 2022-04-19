@@ -105,7 +105,7 @@ class General(commands.Cog):
 			msg = msg.content
 
 
-		async with ctx.message.channel.typing():
+		async with ctx.typing():
 			msg = gtranslate(msg)
 			msg = re.sub("<@[!#$%^&*]?([0-9]+)>", "@-", msg)
 
@@ -131,7 +131,7 @@ class General(commands.Cog):
 
 		msg = re.sub("<@[!#$%^&*]?([0-9]+)>", "@-", msg)
 
-		async with ctx.message.channel.typing():
+		async with ctx.typing():
 			response = requests.get(f"https://api.dictionaryapi.dev/api/v2/entries/en/{quote_plus(msg)}")
 			response = json.loads(response.text)
 
@@ -202,7 +202,7 @@ class Music(commands.Cog):
 		
 		title = ""
 
-		async with ctx.message.channel.typing():
+		async with ctx.typing():
 			length, title, query = get_yt_info(query)
 
 			voice_queue.append({"length": length, "title": title[:-1], "link": query, "started": -1})
@@ -248,7 +248,7 @@ class Music(commands.Cog):
 			print("nothing playing")
 			return
 
-		async with ctx.message.channel.typing():
+		async with ctx.typing():
 			channel = ctx.message.author.voice.channel
 			voice_client = discord.utils.get(self.bot.voice_clients, guild=ctx.guild)
 
