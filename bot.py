@@ -198,6 +198,7 @@ class Music(commands.Cog):
 		query = ' '.join(args)
 
 		print(f'{date()} - play from "{ctx.message.author.name}" ... ', end='', flush=True)
+
 		if not ctx.message.author.voice:
 			await ctx.send(embed=discord.Embed(title="You must be in a voice channel to use this command", color=0xFF0000))
 			print("not in channel")
@@ -246,6 +247,11 @@ class Music(commands.Cog):
 
 		print(f'{date()} - stop from "{ctx.message.author.name}" ... ', end='', flush=True)
 
+		if not ctx.message.author.voice:
+			await ctx.send(embed=discord.Embed(title="You must be in a voice channel to use this command", color=0xFF0000))
+			print("not in channel")
+			return
+
 		if not len(voice_queue):
 			await ctx.send(embed=discord.Embed(title="Nothing is playing", color=0xFF0000))
 			print("nothing playing")
@@ -272,6 +278,7 @@ class Music(commands.Cog):
 
 		if len(voice_queue) < 2:
 			await ctx.send(embed=discord.Embed(title="Empty queue"))
+			print("done")
 			return
 
 		embed = discord.Embed(title="Queue")
@@ -287,7 +294,13 @@ class Music(commands.Cog):
 	@commands.command()
 	async def skip(self, ctx: commands.Context):
 		"""skip whatever is currently playing"""
+
 		print(f'{date()} - skip from "{ctx.message.author.name}" ... ', end='', flush=True)
+
+		if not ctx.message.author.voice:
+			await ctx.send(embed=discord.Embed(title="You must be in a voice channel to use this command", color=0xFF0000))
+			print("not in channel")
+			return
 
 		channel = ctx.message.author.voice.channel
 		voice_client = discord.utils.get(self.bot.voice_clients, guild=ctx.guild)
@@ -300,6 +313,11 @@ class Music(commands.Cog):
 	async def np(self, ctx: commands.Context):
 		"""view currently playing audio information"""
 		print(f'{date()} - np from "{ctx.message.author.name}" ... ', end='', flush=True)
+
+		if not len(voice_queue):
+			await ctx.send(embed=discord.Embed(title="Nothing is playing"))
+			print("nothing playing")
+			return
 
 		title = voice_queue[0]["title"]
 		length = voice_queue[0]["length"]
