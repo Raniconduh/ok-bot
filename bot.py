@@ -53,7 +53,7 @@ async def start_next_queue(ctx, voice_client):
 	global voice_queue
 
 	if len(voice_queue) == 1:
-		await ctx.send(f'Queue empty')
+		await ctx.send(embed=discord.Embed(title="Queue empty"))
 
 		if voice_client:
 			voice_client.stop()
@@ -73,7 +73,10 @@ async def start_next_queue(ctx, voice_client):
 	voice_client.play(audio_source, after=lambda _: (await start_next_queue(ctx, voice_client) for _ in '_').__anext__())
 	voice_queue[0]["started"] = int(time.time())
 
-	await ctx.send(f'Playing {voice_queue[0]["title"]}')
+	embed = discord.Embed(title="Now Playing")
+	embed.add_field(name="Title", value=voice_queue[0]["title"])
+	embed.add_field(name="Duration", value=voice_queue[0]["length"])
+	await ctx.send(embed=embed)
 
 
 ### Discord Functions ###
@@ -100,6 +103,8 @@ async def translate(ctx: commands.Context, *args):
 		msg = msg.content
 
 	async with ctx.message.channel.typing():
+		embed = discord.Embed()
+		embed.add_field(name='** **', value=f'{gtranslate(msg)}')
 		await ctx.send(gtranslate(msg))
 
 	print("done")
@@ -123,7 +128,8 @@ async def define(ctx: commands.Context, *args):
 		response = json.loads(response.text)
 
 	if "title" in response and response["title"].lower() == "no definitions found":
-		await ctx.send("This word doesn't exist")
+		embed = discord.Embed(title="Word does not exist", color=0xFF0000)
+		await ctx.send(embed=embed)
 		print("word does not exist")
 		return
 
@@ -137,17 +143,19 @@ async def define(ctx: commands.Context, *args):
 		phonetic = "*" + response[0]["phonetics"][0]["text"] + "*"
 	else:
 		phonetic = ""
-	meanings = ""
+
+	embed = discord.Embed(title=f'{word} {phonetic}')
+
 	n = 1
 	for meaning in response[0]["meanings"]:
-		meanings += f'{n}. {meaning["partOfSpeech"]}\n   {meaning["definitions"][0]["definition"]}\n\n'
+		embed.add_field(name=f'{n}. {meaning["partOfSpeech"]}', value=meaning["definitions"][0]["definition"])
 		n += 1
-	await ctx.send(f'**{word}**	{phonetic}\n{meanings}')
 
+	await ctx.send(embed=embed)
 	print("done")
 
 
-@bot.command(name="avatar")
+@bot.command(aliases=["a"])
 async def avatar(ctx: commands.Context, *, member: discord.Member = None):
 	"""get a user's avatar"""
 	print(f'{date()} - avatar from "{ctx.message.author.name}" ... ', end='', flush=True)
@@ -158,7 +166,11 @@ async def avatar(ctx: commands.Context, *, member: discord.Member = None):
 		else:
 			member = ctx.message.author
 	avatar = member.avatar_url
-	await ctx.send(avatar)
+
+	embed = discord.Embed(title=f"Avatar for {member.name}#{member.discriminator}")
+	embed.set_image(url=avatar)
+
+	await ctx.send(embed=embed)
 	print("done")
 
 
@@ -169,7 +181,7 @@ async def play(ctx: commands.Context, *args):
 
 	print(f'{date()} - play from "{ctx.message.author.name}" ... ', end='', flush=True)
 	if not ctx.message.author.voice:
-		await ctx.send("You must be in a voice channel to use this command")
+		await ctx.send(embed=discord.Embed(title="You must be in a voice channel to use this command", color=0xFF0000))
 		print("not in channel")
 		return
 	
@@ -181,7 +193,9 @@ async def play(ctx: commands.Context, *args):
 		voice_queue.append({"length": length, "title": title[:-1], "link": query, "started": -1})
 		if len(voice_queue) > 1:
 			print("added to queue")
-			await ctx.send(f'{title} added to queue')
+			embed = discord.Embed(title="Added to queue")
+			embed.add_field(name="Title", value=title)
+			await ctx.send(embed=embed)
 			return
 
 		# get voice channel
@@ -198,7 +212,11 @@ async def play(ctx: commands.Context, *args):
 		audio_source = discord.FFmpegPCMAudio(query)
 		voice_client.play(audio_source, after=lambda _: (await start_next_queue(ctx, voice_client) for _ in '_').__anext__())
 		voice_queue[0]["started"] = int(time.time())
-		await ctx.send(f'Playing {title}')
+
+		embed = discord.Embed(title="Now Playing")
+		embed.add_field(name="Title", value=voice_queue[0]["title"])
+		embed.add_field(name="Duration", value=voice_queue[0]["length"])
+		await ctx.send(embed=embed)
 
 	print("done")
 
@@ -211,7 +229,7 @@ async def stop(ctx: commands.Context):
 	print(f'{date()} - stop from "{ctx.message.author.name}" ... ', end='', flush=True)
 
 	if not len(voice_queue):
-		await ctx.send("Nothing is playing")
+		await ctx.send(embed=discord.Embed(title="Nothing is playing", color=0xFF0000))
 		print("nothing playing")
 		return
 
@@ -224,7 +242,7 @@ async def stop(ctx: commands.Context):
 	
 	voice_queue = []
 
-	await ctx.send("Stopped playing")
+	await ctx.send(embed=discord.Embed(title="Stopped playing"))
 
 	print("done")
 
@@ -235,12 +253,15 @@ async def queue(ctx: commands.Context):
 	print(f'{date()} - queue from "{ctx.message.author.name}" ... ', end='', flush=True)
 
 	if len(voice_queue) < 2:
-		await ctx.send("Empty queue")
+		await ctx.send(embed=discord.Embed(title="Empty queue"))
 		return
-	msg = ""
+
+	embed = discord.Embed(title="Queue")
+	n = 1
 	for item in voice_queue[1:]:
-		msg += item["title"] + '\n'
-	await ctx.send(f"Queue:\n{msg}")
+		embed.add_field(name=f"{n}.", value=item["title"], inline=True)
+		n += 1
+	await ctx.send(embed=embed)
 
 	print("done")
 
