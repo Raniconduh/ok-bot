@@ -104,10 +104,14 @@ class General(commands.Cog):
 			msg = await ctx.fetch_message(ctx.message.reference.message_id)
 			msg = msg.content
 
+
 		async with ctx.message.channel.typing():
+			msg = gtranslate(msg)
+			msg = re.sub("<@[!#$%^&*]?([0-9]+)>", "@-", msg)
+
 			embed = discord.Embed()
 			embed.add_field(name='** **', value=f'{gtranslate(msg)}')
-			await ctx.send(gtranslate(msg))
+			await ctx.send(msg)
 
 		print("done")
 
@@ -124,6 +128,8 @@ class General(commands.Cog):
 			msg = ' '.join(args).strip().replace(' ', '%20')
 		else:
 			msg = await ctx.fetch_message(ctx.message.reference.message_id)
+
+		msg = re.sub("<@[!#$%^&*]?([0-9]+)>", "@-", msg)
 
 		async with ctx.message.channel.typing():
 			response = requests.get(f"https://api.dictionaryapi.dev/api/v2/entries/en/{quote_plus(msg)}")
