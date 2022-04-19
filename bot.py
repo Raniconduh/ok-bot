@@ -61,14 +61,17 @@ async def start_next_queue(ctx, voice_client):
 
 		voice_queue = []
 		return
-	
+
+	voice_queue = voice_queue[1:]
+	if not len(voice_queue): return
+
 	if not voice_client.is_connected():
 		channel = ctx.message.author.voice.channel
 		voice = discord.utils.get(ctx.guild.voice_channels, name=channel.name)
 		voice_client = discord.utils.get(bot.voice_clients, guild=ctx.guild)
 		voice.connect()
 	
-	voice_queue = voice_queue[1:]
+
 	audio_source = discord.FFmpegPCMAudio(voice_queue[0]["link"])
 	voice_client.play(audio_source, after=lambda _: ctx.bot.loop.create_task(start_next_queue(ctx, voice_client)))
 	voice_queue[0]["started"] = int(time.time())
@@ -289,7 +292,6 @@ class Music(commands.Cog):
 		channel = ctx.message.author.voice.channel
 		voice_client = discord.utils.get(self.bot.voice_clients, guild=ctx.guild)
 		voice_client.stop()
-	#	await start_next_queue(ctx, voice_client)
 
 		print("done")
 
