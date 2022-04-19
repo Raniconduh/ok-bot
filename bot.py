@@ -149,9 +149,17 @@ class General(commands.Cog):
 		if "phonetic" in response[0]:
 			phonetic = "*" + response[0]["phonetic"] + "*"
 		elif len(response[0]["phonetics"]) > 1:
-			phonetic = "*" + response[0]["phonetics"][1]["text"] + "*"
+			phonetic = response[0]["phonetics"]
+			if len(phonetic) > 1: phonetic = phonetic[1]
+			if "text" in phonetic and len(phonetic["text"]) > 1:
+				phonetic = "*" + phonetic["text"] + "*"
+			else: phonetic = ""
 		elif len(response[0]["phonetics"]) > 0:
-			phonetic = "*" + response[0]["phonetics"][0]["text"] + "*"
+			phonetic = response[0]["phonetics"]
+			if len(phonetic): phonetic = phonetic[0]
+			if "text" in phonetic and len(phonetic["text"]) > 1:
+				phonetic = "*" + phonetic["text"] + "*"
+			else: phonetic = ""
 		else:
 			phonetic = ""
 
