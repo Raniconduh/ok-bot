@@ -229,9 +229,13 @@ class General(commands.Cog):
 				link = link.replace(')', '%29').replace('(', '%28')
 				embed = discord.Embed(title=f"Summary from {source}")
 				embed.description = f'{text}\n\n{link}'
+			elif not len(related):
+				embed = discord.Embed(title="No summary", color=0xFF0000)
 			else:
+				l = len(related)
+				if l > 3: l = 3
 				embed = discord.Embed(title="Related topics")
-				for i in range(3):
+				for i in range(l):
 					embed.add_field(name=f"{related[i]['FirstURL']}",
 							value=related[i]['Text'])
 
