@@ -232,6 +232,11 @@ class General(commands.Cog):
 				embed.description = f'{text}\n\n{link}'
 			else:
 				embed = discord.Embed(title="No summary", color=0xFF0000)
+				if link:
+					host = re.search(r'https?://[^/]+/?', link)[0]
+					path = quote_plus(link[len(host):])
+					link = host + path
+					embed.description = link
 
 			await ctx.send(embed=embed)
 
