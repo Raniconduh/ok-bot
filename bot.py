@@ -58,7 +58,7 @@ def get_summary(search):
 	response = requests.get(f"https://api.duckduckgo.com/?{urlencode(params)}")
 	response = json.loads(response.text)
 
-	return response["AbstractSource"], response["AbstractURL"], response["AbstractText"]
+	return response["AbstractSource"], response["AbstractURL"], response["AbstractText"], response["RelatedTopics"]
 
 
 async def start_next_queue(ctx, voice_client):
@@ -207,17 +207,16 @@ class General(commands.Cog):
 
 	@commands.command(aliases=["s"])
 	async def summarize(self, ctx: commands.Context, *args):
-		"""get a summary of a term or phrase"""
+		"""
+		get a summary of a term or phrase
+		gets result from Wikipedia or, if not found, performs a duckduckgo search and returns related topics
+		"""
 		print(f'{date()} - summarize from "{ctx.message.author.name}" ... ', end='', flush=True)
 
-		message = ""
-		if ctx.message.reference:
-			message = await ctx.fetch_message(ctx.message.reference.message_id)
-			message = message.content
-		else: message = ' '.join(args)
+		message = ' '.join(args)
 
 		async with ctx.typing():
-			source, link, text = get_summary(message)
+			source, link, text, related = get_summary(message)
 
 			embed = None
 			if text:
@@ -231,12 +230,10 @@ class General(commands.Cog):
 				embed = discord.Embed(title=f"Summary from {source}")
 				embed.description = f'{text}\n\n{link}'
 			else:
-				embed = discord.Embed(title="No summary", color=0xFF0000)
-				if link:
-					host = re.search(r'https?://[^/]+/?', link)[0]
-					path = quote_plus(link[len(host):])
-					link = host + path
-					embed.description = link
+				embed = discord.Embed(title="Related topics")
+				for i in range(3):
+					embed.add_field(name=f"{related[i]['FirstURL']}",
+							value=related[i]['Text'])
 
 			await ctx.send(embed=embed)
 
