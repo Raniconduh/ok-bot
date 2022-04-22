@@ -49,6 +49,18 @@ def get_yt_info(query):
 	return length, title, query
 
 
+def get_summary(search):
+	params = {
+		"q": search,
+		"format": "json"
+	}
+
+	response = requests.get(f"https://api.duckduckgo.com/?{urlencode(params)}")
+	response = json.loads(response.text)
+
+	return response["AbstractSource"], response["AbstractURL"], response["AbstractText"]
+
+
 async def start_next_queue(ctx, voice_client):
 	global voice_queue
 
@@ -192,6 +204,38 @@ class General(commands.Cog):
 		await ctx.send(embed=embed)
 		print("done")
 
+
+	@commands.command(aliases=["s"])
+	async def summarize(self, ctx: commands.Context, *args):
+		"""get a summary of a term or phrase"""
+		print(f'{date()} - summarize from "{ctx.message.author.name}" ... ', end='', flush=True)
+
+		message = ""
+		if ctx.message.reference:
+			message = await ctx.fetch_message(ctx.message.reference.message_id)
+			message = message.content
+		else: message = ' '.join(args)
+
+		async with ctx.typing():
+			source, link, text = get_summary(message)
+
+			embed = None
+			if text:
+				host = re.search(r'https?://[^/]+/?', link)[0]
+				path = quote_plus(link[len(host):])
+				link = host + path
+
+				text = text[:4096 - len(link)]
+
+				link = link.replace(')', '%29').replace('(', '%28')
+				embed = discord.Embed(title=f"Summary from {source}")
+				embed.description = f'{text}\n\n{link}'
+			else:
+				embed = discord.Embed(title="No summary", color=0xFF0000)
+
+			await ctx.send(embed=embed)
+
+		print("done")
 
 class Music(commands.Cog):
 	"""Control music playing"""
