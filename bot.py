@@ -397,6 +397,24 @@ class Music(commands.Cog):
 		print("done")
 
 
+	@bot.event
+	async def on_voice_state_update(self, before: discord.VoiceState, after: discord.VoiceState):
+		print(f'{date()} - voice state update" ... ', end='', flush=True)
+
+		guild = getattr(before.channel, 'guild', None)
+		if guild is None:
+			print("no guild or channel")
+			return
+
+		voice = guild.voice_client
+		if voice is None or not voice.is_connected():
+			print("not connected to voice")
+			return
+		if len(voice.channel.members) == 1:
+			await voice.disconnect()
+			print("disconnected")
+
+
 @bot.event
 async def on_ready():
 	print('Running')
