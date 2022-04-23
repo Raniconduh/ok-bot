@@ -7,7 +7,11 @@ import requests
 from urllib.parse import urlencode, quote_plus
 import re
 import asyncio
+import youtube_dl
 
+ydl_opts = {
+	'format': 'bestaudio',
+}
 
 voice_queue = {}
 
@@ -15,6 +19,15 @@ voice_queue = {}
 ### General Functions ###
 def date():
 	return time.strftime("%m/%d/%Y, %H:%M:%S")
+
+
+def stotime(seconds):
+	s = int(seconds) % 60
+	m = int(seconds // (60)) % 60
+	h = int(seconds // (60 * 60))
+
+	if h: return f'{h}:{m}:{s}'
+	else: return f'{m}:{s}'
 
 
 def gtranslate(text):
@@ -32,21 +45,22 @@ def gtranslate(text):
 
 def get_yt_info(query):
 	esc_query = query.replace("'", "\\'")
-	# search for video
-	if not re.match(r'^https?://.+', query):
-		u = os.popen(f"youtube-dl --get-duration -seg --extract-audio --audio-quality 0 'ytsearch1:{esc_query}'")
-	# play directly
-	else:
-		u = os.popen(f"youtube-dl --get-duration -seg --extract-audio --audio-quality 0 '{repr(esc_query)}'")
 
-	query = u.readlines()
-	u.close()
-	
-	length = query[-1]
-	title = query[0]
-	query = query[1]
+	info = {}
+	with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+		# search for video
+		if not re.match(r'^https?://.+', query):
+			info = ydl.extract_info(f'ytsearch1:{esc_query}', download=False)
+			info = info['entries'][0]
+		# play directly
+		else:
+			info = ydl.extract_info(repr(esc_query), download=False)
 
-	return length, title, query
+	length = stotime(info['duration'])
+	title = info['title']
+	url = info['formats'][0]['url']
+
+	return length, title, url
 
 
 def get_summary(search):
@@ -391,12 +405,7 @@ class Music(commands.Cog):
 		length = voice_queue[guild][0]["length"]
 
 		played = time.time() - voice_queue[guild][0]["started"]
-		s = int(played) % 60
-		m = int(played // (60)) % 60
-		h = int(played // (60 * 60))
-		
-		if h: played = f'{h}:{m}:{s}'
-		else: played = f'{m}:{s}'
+		played = stotime(played)
 
 		embed = discord.Embed(title="Now Playing")
 		embed.add_field(name="Title", value=title, inline=True)
