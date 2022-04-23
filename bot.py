@@ -286,7 +286,7 @@ class Music(commands.Cog):
 			length, title, query = get_yt_info(query)
 
 			if not guild in voice_queue: voice_queue[guild] = []
-			voice_queue[guild].append({"length": length, "title": title[:-1], "link": query, "started": -1})
+			voice_queue[guild].append({"length": length, "title": title, "link": query, "started": -1})
 			if len(voice_queue[guild]) > 1:
 				print("added to queue")
 				embed = discord.Embed(title="Added to queue")
