@@ -26,8 +26,9 @@ def stotime(seconds):
 	m = int(seconds // (60)) % 60
 	h = int(seconds // (60 * 60))
 
-	if h: return f'{h}:{m}:{s}'
-	else: return f'{m}:{s}'
+
+	if h: return f'{h}:{m:0>2}:{s:0>2}'
+	else: return f'{m}:{s:0>2}'
 
 
 def gtranslate(text):
