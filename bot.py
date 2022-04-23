@@ -9,7 +9,7 @@ import re
 import asyncio
 
 
-voice_queue = []
+voice_queue = {}
 
 
 ### General Functions ###
@@ -64,18 +64,20 @@ def get_summary(search):
 async def start_next_queue(ctx, voice_client):
 	global voice_queue
 
-	if len(voice_queue) == 1:
+	guild = ctx.message.guild.id
+
+	if len(voice_queue[guild]) == 1:
 		await ctx.send(embed=discord.Embed(title="Queue empty"))
 
 		if voice_client:
 			voice_client.stop()
 			await voice_client.disconnect()
 
-		voice_queue = []
+		voice_queue[guild] = []
 		return
 
-	voice_queue = voice_queue[1:]
-	if not len(voice_queue): return
+	voice_queue[guild] = voice_queue[guild][1:]
+	if not len(voice_queue[guild]): return
 
 	if not voice_client.is_connected():
 		channel = ctx.message.author.voice.channel
@@ -84,13 +86,13 @@ async def start_next_queue(ctx, voice_client):
 		voice.connect()
 	
 
-	audio_source = discord.FFmpegPCMAudio(voice_queue[0]["link"])
+	audio_source = discord.FFmpegPCMAudio(voice_queue[guild][0]["link"])
 	voice_client.play(audio_source, after=lambda _: ctx.bot.loop.create_task(start_next_queue(ctx, voice_client)))
-	voice_queue[0]["started"] = int(time.time())
+	voice_queue[guild][0]["started"] = int(time.time())
 
 	embed = discord.Embed(title="Now Playing")
-	embed.add_field(name="Title", value=voice_queue[0]["title"])
-	embed.add_field(name="Duration", value=voice_queue[0]["length"])
+	embed.add_field(name="Title", value=voice_queue[guild][0]["title"])
+	embed.add_field(name="Duration", value=voice_queue[guild][0]["length"])
 	await ctx.send(embed=embed)
 
 
@@ -263,12 +265,14 @@ class Music(commands.Cog):
 			return
 		
 		title = ""
+		guild = ctx.message.guild.id
 
 		async with ctx.typing():
 			length, title, query = get_yt_info(query)
 
-			voice_queue.append({"length": length, "title": title[:-1], "link": query, "started": -1})
-			if len(voice_queue) > 1:
+			if not guild in voice_queue: voice_queue[guild] = []
+			voice_queue[guild].append({"length": length, "title": title[:-1], "link": query, "started": -1})
+			if len(voice_queue[guild]) > 1:
 				print("added to queue")
 				embed = discord.Embed(title="Added to queue")
 				embed.add_field(name="Title", value=title)
@@ -288,11 +292,11 @@ class Music(commands.Cog):
 			# play audio
 			audio_source = discord.FFmpegPCMAudio(query)
 			voice_client.play(audio_source, after=lambda _: ctx.bot.loop.create_task(start_next_queue(ctx, voice_client)))
-			voice_queue[0]["started"] = int(time.time())
+			voice_queue[guild][0]["started"] = int(time.time())
 
 			embed = discord.Embed(title="Now Playing")
-			embed.add_field(name="Title", value=voice_queue[0]["title"])
-			embed.add_field(name="Duration", value=voice_queue[0]["length"])
+			embed.add_field(name="Title", value=voice_queue[guild][0]["title"])
+			embed.add_field(name="Duration", value=voice_queue[guild][0]["length"])
 			await ctx.send(embed=embed)
 
 		print("done")
@@ -310,7 +314,9 @@ class Music(commands.Cog):
 			print("not in channel")
 			return
 
-		if not len(voice_queue):
+		guild = ctx.message.guild.id
+
+		if not guild in voice_queue or not len(voice_queue[guild]):
 			await ctx.send(embed=discord.Embed(title="Nothing is playing", color=0xFF0000))
 			print("nothing playing")
 			return
@@ -322,7 +328,7 @@ class Music(commands.Cog):
 			voice_client.stop()
 			await voice_client.disconnect()
 		
-		voice_queue = []
+		voice_queue[guild] = []
 
 		await ctx.send(embed=discord.Embed(title="Stopped playing"))
 
@@ -334,14 +340,16 @@ class Music(commands.Cog):
 		"""Show current audio queue"""
 		print(f'{date()} - queue from "{ctx.message.author.name}" ... ', end='', flush=True)
 
-		if len(voice_queue) < 2:
+		guild = ctx.message.guild.id
+
+		if not guild in voice_queue or len(voice_queue[guild]) < 2:
 			await ctx.send(embed=discord.Embed(title="Empty queue"))
 			print("done")
 			return
 
 		embed = discord.Embed(title="Queue")
 		n = 1
-		for item in voice_queue[1:]:
+		for item in voice_queue[guild][1:]:
 			embed.add_field(name=f"{n}.", value=item["title"], inline=True)
 			n += 1
 		await ctx.send(embed=embed)
@@ -372,15 +380,17 @@ class Music(commands.Cog):
 		"""view currently playing audio information"""
 		print(f'{date()} - np from "{ctx.message.author.name}" ... ', end='', flush=True)
 
-		if not len(voice_queue):
+		guild = ctx.message.guild.id
+
+		if not guild in voice_queue or not len(voice_queue[guild]):
 			await ctx.send(embed=discord.Embed(title="Nothing is playing"))
 			print("nothing playing")
 			return
 
-		title = voice_queue[0]["title"]
-		length = voice_queue[0]["length"]
+		title = voice_queue[guild][0]["title"]
+		length = voice_queue[guild][0]["length"]
 
-		played = time.time() - voice_queue[0]["started"]
+		played = time.time() - voice_queue[guild][0]["started"]
 		s = int(played) % 60
 		m = int(played // (60)) % 60
 		h = int(played // (60 * 60))
