@@ -253,6 +253,7 @@ class General(commands.Cog):
 				if l > 3: l = 3
 				embed = discord.Embed(title="Related topics")
 				for i in range(l):
+					if not 'FirstURL' in related[i]: break
 					embed.add_field(name=f"{related[i]['FirstURL']}",
 							value=related[i]['Text'])
 
