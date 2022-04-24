@@ -112,7 +112,10 @@ async def start_next_queue(ctx, voice_client):
 
 
 ### Discord Functions ###
-bot = commands.Bot(command_prefix="!")
+intents = discord.Intents.default()
+intents.members = True
+
+bot = commands.Bot(command_prefix="!", intents=intents)
 
 
 class General(commands.Cog):
@@ -457,6 +460,7 @@ class Music(commands.Cog):
 		nl = voice.channel.members
 		for m in range(len(nl)):
 			if nl[m].id == bot_info.id: del nl[m]
+		print(f'MEMBERS - {nl}')
 		if len(nl) == 0:
 			await voice.disconnect()
 			print("disconnected")
