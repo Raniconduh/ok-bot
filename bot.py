@@ -434,6 +434,10 @@ class Music(commands.Cog):
 
 		print("done")
 
+	@commands.command()
+	async def id(self, ctx):
+		i = await self.bot.application_info()
+		print(i.id)
 
 	@bot.event
 	async def on_voice_state_update(self, before: discord.VoiceState, after: discord.VoiceState):
@@ -448,7 +452,12 @@ class Music(commands.Cog):
 		if voice is None or not voice.is_connected():
 			print("not connected to voice")
 			return
-		if len(voice.channel.members) == 1:
+
+		bot_info = await bot.application_info()
+		nl = voice.channel.members
+		for m in range(len(nl)):
+			if nl[m].id == bot_info.id: del nl[m]
+		if len(nl) == 0:
 			await voice.disconnect()
 			print("disconnected")
 
