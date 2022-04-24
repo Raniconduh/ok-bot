@@ -134,8 +134,13 @@ class General(commands.Cog):
 			msg = ' '.join(args).strip()
 		else:
 			msg = await ctx.fetch_message(ctx.message.reference.message_id)
-			msg = msg.content
+			msg = msg.content.strip()
 
+		if not len(msg):
+			embed = discord.Embed(title="Nothing to translate", color=0xFF0000)
+			await ctx.send(embed=embed)
+			print("no text")
+			return
 
 		async with ctx.typing():
 			msg = gtranslate(msg)
@@ -152,14 +157,16 @@ class General(commands.Cog):
 	async def define(self, ctx: commands.Context, *args):
 		"""
 		define a word
-		will read from reply or given arguments
+		will read from given arguments
 		"""
 		print(f'{date()} - define from "{ctx.message.author.name}" ... ', end='', flush=True)
 
-		if not ctx.message.reference:
-			msg = ' '.join(args).strip().replace(' ', '%20')
-		else:
-			msg = await ctx.fetch_message(ctx.message.reference.message_id)
+		msg = ' '.join(args).strip().replace(' ', '%20')
+		if not len(msg):
+			embed = discord.Embed(title="Nothing to define", color=0xFF0000)
+			await ctx.send(embed=embed)
+			print("no text")
+			return
 
 		msg = re.sub("<@[!#$%^&*]?([0-9]+)>", "@-", msg)
 
@@ -230,7 +237,12 @@ class General(commands.Cog):
 		"""
 		print(f'{date()} - summarize from "{ctx.message.author.name}" ... ', end='', flush=True)
 
-		message = ' '.join(args)
+		message = ' '.join(args).strip()
+		if not len(message):
+			embed = discord.Embed(title="Nothing to summarize", color=0xFF0000)
+			await ctx.send(embed=embed)
+			print("no text")
+			return
 
 		async with ctx.typing():
 			source, link, text, related = get_summary(message)
@@ -271,8 +283,6 @@ class Music(commands.Cog):
 	@commands.command(aliases=['p'])
 	async def play(self, ctx: commands.Context, *args):
 		"""play media"""
-		query = ' '.join(args)
-
 		print(f'{date()} - play from "{ctx.message.author.name}" ... ', end='', flush=True)
 
 		if not ctx.message.author.voice:
@@ -280,8 +290,15 @@ class Music(commands.Cog):
 			print("not in channel")
 			return
 		
+		query = ' '.join(args).strip()
 		title = ""
 		guild = ctx.message.guild.id
+
+		if not len(query):
+			embed = discord.Embed(title="You must specofy something to play", color=0xFF0000)
+			await ctx.send(embed=embed)
+			print("nothing specified")
+			return
 
 		async with ctx.typing():
 			length, title, query = get_yt_info(query)
@@ -351,7 +368,7 @@ class Music(commands.Cog):
 		print("done")
 
 
-	@commands.command()
+	@commands.command(aliases=["q"])
 	async def queue(self, ctx: commands.Context):
 		"""Show current audio queue"""
 		print(f'{date()} - queue from "{ctx.message.author.name}" ... ', end='', flush=True)
