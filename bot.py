@@ -55,7 +55,7 @@ def get_yt_info(query):
 			info = info['entries'][0]
 		# play directly
 		else:
-			info = ydl.extract_info(repr(esc_query), download=False)
+			info = ydl.extract_info(esc_query, download=False)
 
 	length = stotime(info['duration'])
 	title = info['title']
@@ -460,7 +460,6 @@ class Music(commands.Cog):
 		nl = voice.channel.members
 		for m in range(len(nl)):
 			if nl[m].id == bot_info.id: del nl[m]
-		print(f'MEMBERS - {nl}')
 		if len(nl) == 0:
 			await voice.disconnect()
 			print("disconnected")
