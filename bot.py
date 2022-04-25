@@ -258,6 +258,8 @@ class General(commands.Cog):
 			image = summ["Image"]
 
 			embed = None
+			fname = None
+			file = None
 			if text:
 				host = re.search(r'https?://[^/]+/?', link)[0]
 				path = quote_plus(link[len(host):])
