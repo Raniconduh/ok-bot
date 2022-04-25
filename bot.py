@@ -8,6 +8,9 @@ from urllib.parse import urlencode, quote_plus
 import re
 import asyncio
 import youtube_dl
+from PIL import Image
+from io import BytesIO
+
 
 ydl_opts = {
 	'format': 'bestaudio',
@@ -72,8 +75,7 @@ def get_summary(search):
 
 	response = requests.get(f"https://api.duckduckgo.com/?{urlencode(params)}")
 	response = json.loads(response.text)
-
-	return response["AbstractSource"], response["AbstractURL"], response["AbstractText"], response["RelatedTopics"]
+	return response
 
 
 async def start_next_queue(ctx, voice_client):
@@ -248,7 +250,12 @@ class General(commands.Cog):
 			return
 
 		async with ctx.typing():
-			source, link, text, related = get_summary(message)
+			summ = get_summary(message)
+			source = summ["AbstractSource"]
+			link = summ["AbstractURL"]
+			text = summ["AbstractText"]
+			related = summ["RelatedTopics"]
+			image = summ["Image"]
 
 			embed = None
 			if text:
@@ -261,6 +268,18 @@ class General(commands.Cog):
 				link = link.replace(')', '%29').replace('(', '%28')
 				embed = discord.Embed(title=f"Summary from {source}")
 				embed.description = f'{text}\n\n{link}'
+				if image and summ["ImageIsLogo"]:
+					embed.set_thumbnail(url=f'https://duckduckgo.com/{image}')
+				elif image:
+					img = requests.get(f'https://duckduckgo.com/{image}')
+					img = img.content
+					img = Image.open(BytesIO(img))
+					ext = img.format
+					img = img.resize((96, 96), resample=Image.Resampling.BILINEAR)
+					fname = f'img.{ext}'
+					img.save(fname)
+					file = discord.File(fname)
+					embed.set_image(url=f'attachment://img.{ext}')
 			elif not len(related):
 				embed = discord.Embed(title="No summary", color=0xFF0000)
 			else:
@@ -272,7 +291,10 @@ class General(commands.Cog):
 					embed.add_field(name=f"{related[i]['FirstURL']}",
 							value=related[i]['Text'])
 
-			await ctx.send(embed=embed)
+			if file:
+				await ctx.send(file=file, embed=embed)
+				os.remove(fname)
+			else: await ctx.send(embed=embed)
 
 		print("done")
 
@@ -437,10 +459,6 @@ class Music(commands.Cog):
 
 		print("done")
 
-	@commands.command()
-	async def id(self, ctx):
-		i = await self.bot.application_info()
-		print(i.id)
 
 	@bot.event
 	async def on_voice_state_update(self, before: discord.VoiceState, after: discord.VoiceState):
