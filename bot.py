@@ -249,6 +249,9 @@ class General(commands.Cog):
 			print("no text")
 			return
 
+		embed = None
+		fname = None
+		file = None
 		async with ctx.typing():
 			summ = get_summary(message)
 			source = summ["AbstractSource"]
@@ -257,9 +260,6 @@ class General(commands.Cog):
 			related = summ["RelatedTopics"]
 			image = summ["Image"]
 
-			embed = None
-			fname = None
-			file = None
 			if text:
 				host = re.search(r'https?://[^/]+/?', link)[0]
 				path = quote_plus(link[len(host):])
