@@ -60,8 +60,8 @@ def get_yt_info(query):
 		else:
 			info = ydl.extract_info(esc_query, download=False)
 
-	length = stotime(info['duration'])
-	title = info['title']
+	length = stotime(info.get('duration', 0)])
+	title = info.get('title', 'No title')
 	url = info['formats'][0]['url']
 
 	return length, title, url
