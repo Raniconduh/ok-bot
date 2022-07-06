@@ -322,7 +322,7 @@ class Music(commands.Cog):
 		guild = ctx.message.guild.id
 
 		if not len(query):
-			embed = discord.Embed(title="You must specofy something to play", color=0xFF0000)
+			embed = discord.Embed(title="You must specify something to play", color=0xFF0000)
 			await ctx.send(embed=embed)
 			print("nothing specified")
 			return
